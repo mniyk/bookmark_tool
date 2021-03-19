@@ -1,0 +1,98 @@
+body {
+    background-color: black;
+    color: lightseagreen;
+    margin: 0;
+}
+
+button {
+    background-color: lightseagreen;
+    margin-left: 20px;
+    color: white;
+    border: none;
+    width: 150px;
+    height: 30px;
+}
+
+.btn_right {
+    display: flex;
+    justify-content: flex-end;
+    margin-right: 20px;
+}
+
+a {
+    color: lightseagreen;
+    text-decoration: none;
+    display: block;
+}
+
+h1 {
+    margin: 0;
+    padding: 20px;
+}
+
+/* ブックマークフォーム */
+.bookmark_form {
+    margin: 0 auto;
+    width: 100%;
+}
+
+.bookmark_form ul {
+    padding: 0;
+}
+
+.bookmark_form li {
+    margin: 0 20px;
+    list-style: none;
+}
+
+.bookmark_form li label {
+    display: block;
+}
+
+.bookmark_form li input {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* ADDフォーム */
+#add {
+    display: none;
+}
+
+#error_add {
+    margin-left: 20px;
+    display: none;
+}
+
+/* 詳細フォーム */
+#detail {
+    display: none;
+}
+
+#open_link {
+    color: white;
+}
+
+/* ブックマークテーブル */
+#bookmarks {
+    padding: 20px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+thead {
+    background-color: white;
+    color: black;
+}
+
+tbody tr:hover {
+    background-color: white;
+}
+
+th, td {
+    padding: 5px;
+    border: 1px solid lightseagreen;
+}

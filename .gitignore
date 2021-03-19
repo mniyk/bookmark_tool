@@ -3,3 +3,4 @@
 
 # Current project files
 venv
+db.sqlite
