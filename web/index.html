@@ -22,7 +22,7 @@
 
     <!-- 追加フォーム -->
     <div id="add" class="bookmark_form">
-        <div id="error">ERROR：すでに存在します。</div>
+        <div id="error">ERROR：<span id="error_message"></span></div>
 
         <ul>
             <li>
@@ -118,12 +118,18 @@
             let url = document.getElementById("add_url").value;
             let description = document.getElementById("add_description").value;
 
-            let result = await eel.add_bookmark(title, tag, url, description)();
-
-            if (result === true) {
-                window.location.href = "index.html";
-            } else {
+            if (title === "" || tag === "" || url === "") {
                 document.getElementById("error").style.display = "block";
+                document.getElementById("error_message").innerHTML = "DESCRIPTION以外は入力してください。";
+            } else {
+                let result = await eel.add_bookmark(title, tag, url, description)();
+
+                if (result === true) {
+                    window.location.href = "index.html";
+                } else {
+                    document.getElementById("error").style.display = "block";
+                    document.getElementById("error_message").innerHTML = "すでに同じURLが存在します。";
+                }
             }
         }
 
