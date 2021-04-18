@@ -1,0 +1,285 @@
+{% extends 'base.html' %} 
+{% block title %}Hello, World!{% endblock %}
+{% block content %}
+    <h1>Bookmarks</h1>
+
+    <div id="create-bookmark">
+        <div class="text-end mt-3 mb-3">
+            <button id="create-form-btn" class="btn btn-outline-secondary w-25" onclick="open_create_form()">
+                OPEN CREATE FORM
+            </button>
+        </div>
+        <div id="create-form" style="display: none;">
+            <div class="mb-3 row">
+                <label for="create-url" class="col-sm-3 col-form-label">URL</label>
+                <div class="col-sm-9">
+                    <input type="text" class="form-control" id="create-url">
+                </div>
+            </div>
+            <div class="mb-3 row">
+                <label for="create-title" class="col-sm-3 col-form-label">TITLE</label>
+                <div class="col-sm-9">
+                    <input
+                        type="text" class="form-control" id="create-title"
+                        placeholder="空であれば、対象URLのTITLEを取得します。"
+                    >
+                </div>
+            </div>
+            <div class="mb-3 row">
+                <label for="create-tag" class="col-sm-3 col-form-label">TAG</label>
+                <div class="col-sm-9">
+                    <input
+                        type="text" class="form-control" id="create-tag"
+                        placeholder="TAGを複数設定する場合は、「,」区切りで入力してください。"
+                    >
+                </div>
+            </div>
+            <div class="mb-3 row">
+                <label for="create-description" class="col-sm-3 col-form-label">DESCRIPTION</label>
+                <div class="col-sm-9">
+                    <input type="text" class="form-control" id="create-description">
+                </div>
+            </div>
+            <div class="text-end">
+                <button class="btn btn-outline-secondary w-25" onclick="create_bookmark()">CREATE</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="bookmark-list">
+        <h2>Bookmark List</h2>
+        <div id="bookmark-tags" class="mb-3"></div>
+    </div>
+
+    <div id="edit-bookmark" style="display: none;" class="mt-3">
+        <div class="text-end mt-3 mb-3">
+            <a href="bookmarks.html" class="btn btn-outline-secondary w-25">BACK</a>
+        </div>
+        <div id="edit-form">
+            <div class="mb-3 row">
+                <label for="edit-url" class="col-sm-3 col-form-label">URL</label>
+                <div class="col-sm-9">
+                    <input type="text" class="form-control" id="edit-url" readonly>
+                </div>
+            </div>
+            <div class="mb-3 row">
+                <label for="edit-title" class="col-sm-3 col-form-label">TITLE</label>
+                <div class="col-sm-9">
+                    <input type="text" class="form-control" id="edit-title">
+                </div>
+            </div>
+            <div class="mb-3 row">
+                <label for="edit-tag" class="col-sm-3 col-form-label">TAG</label>
+                <div class="col-sm-9">
+                    <input type="text" class="form-control" id="edit-tag">
+                </div>
+            </div>
+            <div class="mb-3 row">
+                <label for="edit-description" class="col-sm-3 col-form-label">DESCRIPTION</label>
+                <div class="col-sm-9">
+                    <input type="text" class="form-control" id="edit-description">
+                </div>
+            </div>
+            <div class="text-end">
+                <button class="btn btn-outline-secondary w-25" onclick="update_bookmark()">UPDATE</button>
+                <button class="btn btn-outline-secondary w-25" onclick="delete_bookmark()">DELETE</button>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block original_script %}
+    <script>
+        function open_create_form() {
+            let elem = document.getElementById('create-form');
+
+            if (elem.style.display === "block") {
+                elem.style.display = "none";
+                document.getElementById('new-form-btn').innerText = "OPEN CREATE FORM";
+            } else {
+                elem.style.display = "block";
+                document.getElementById('create-form-btn').innerText = "CLOSE CREATE FORM";
+            }
+        }
+
+        function search_bookmark() {
+            let bookmarks = document.getElementsByClassName('card');
+            let tags = document.getElementsByClassName('tag');
+            let checked_count = document.querySelectorAll('.tag:checked').length
+
+            if (checked_count > 0) {
+                for (let i = 0; i < bookmarks.length; i++) {
+                    bookmarks[i].style.display = 'none';
+                }
+
+                for (let i = 0; i < tags.length; i++) {
+                    for (let j = 0; j < bookmarks.length; j++) {
+                        if (tags[i].checked) {
+                            let target = bookmarks[j].getElementsByClassName(tags[i].id);
+
+                            if (target.length > 0) {
+                                bookmarks[j].style.display = 'block';
+                            }
+                        }
+                    }
+                }
+            } else {
+                for (let i = 0; i < bookmarks.length; i++) {
+                    bookmarks[i].style.display = 'block';
+                }
+            }
+        }
+
+        async function create_bookmark() {
+            let result = await eel.insert_bookmark(
+                document.getElementById('create-url').value,
+                document.getElementById('create-title').value,
+                document.getElementById('create-tag').value,
+                document.getElementById('create-description').value
+            )();
+
+            if (result === false) {
+                alert('Failure Created Bookmark');
+            }
+
+            window.location.href = 'bookmarks.html';
+        }
+
+        async function get_bookmarks() {
+            let bookmark_list = document.getElementById('bookmark-list');
+            let bookmark_tags = document.getElementById('bookmark-tags');
+
+            let bs = await eel.get_bookmarks('')();
+            let tags_list = [];
+            let tags_split = [];
+
+            for (let i = 0; i < bs.length; i++) {
+                let buf_tags_list = [];
+
+                let card = document.createElement('div');
+                card.classList.add('card', 'w-100', 'mb-3');
+
+                let card_body = document.createElement('div');
+                card_body.classList.add('card-body');
+
+                let card_title = document.createElement('h5');
+                card_title.classList.add('card-title');
+                card_title.innerText = bs[i][1];
+
+                let card_text = document.createElement('p');
+                card_text.classList.add('card-text');
+                card_text.innerText = bs[i][3];
+
+                let card_btns = document.createElement('div');
+                card_btns.classList.add('text-end');
+
+                let open_btn = document.createElement('a');
+                open_btn.classList.add('btn', 'btn-outline-secondary', 'w-25', 'mx-1');
+                open_btn.innerText = 'OPEN';
+                open_btn.href = bs[i][0]
+                open_btn.target = '_blank'
+
+                let edit_btn = document.createElement('a');
+                edit_btn.classList.add('btn', 'btn-outline-secondary', 'w-25', 'mx-1');
+                edit_btn.innerText = 'EDIT';
+                edit_btn.addEventListener("click", function() {
+                    get_bookmark(bs[i][0]);
+                });
+
+                let tag_btns = document.createElement('div');
+                tag_btns.classList.add('tags');
+
+                if (bs[i][2].indexOf(',') !== -1) {
+                    tags_split = bs[i][2].split(',');
+                    tags_list = tags_list.concat(tags_split)
+                    buf_tags_list = buf_tags_list.concat(tags_split);
+                } else {
+                    tags_list.push(bs[i][2]);
+                    buf_tags_list.push(bs[i][2]);
+                }
+                buf_tags_list = buf_tags_list.filter(Boolean);
+
+                for (let i = 0; i < buf_tags_list.length; i++) {
+                    let tag_p = document.createElement('span');
+                    tag_p.classList.add('border', 'border-secondary', 'mx-1', 'px-1', 'py-1', buf_tags_list[i]);
+                    tag_p.innerText = buf_tags_list[i];
+
+                    tag_btns.appendChild(tag_p);
+                }
+
+                card_btns.appendChild(open_btn);
+                card_btns.appendChild(edit_btn);
+
+                card_body.appendChild(card_title);
+                card_body.appendChild(card_text);
+                card_body.appendChild(tag_btns);
+                card_body.appendChild(card_btns);
+
+                card.appendChild(card_body);
+
+                bookmark_list.appendChild(card);
+            }
+
+            tags_list = tags_list.filter(Boolean);
+
+            for (let i = 0; i < tags_list.length; i++) {
+                let tag_checkbox = document.createElement('input')
+                tag_checkbox.type = 'checkbox'
+                tag_checkbox.classList.add('btn-check', 'mx-1', 'tag')
+                tag_checkbox.id = tags_list[i]
+                tag_checkbox.autocomplete = 'off'
+                tag_checkbox.addEventListener('change', function() {
+                    search_bookmark();
+                });
+
+                let tag_label = document.createElement('label')
+                tag_label.classList.add('btn', 'btn-outline-secondary', 'mx-1')
+                tag_label.setAttribute('for', tags_list[i])
+                tag_label.innerText = tags_list[i]
+
+                bookmark_tags.appendChild(tag_checkbox)
+                bookmark_tags.appendChild(tag_label)
+            }
+        }
+        get_bookmarks();
+
+        async function get_bookmark(url) {
+            let bs = await eel.get_bookmarks(url)();
+
+            document.getElementById('create-bookmark').style.display = 'none';
+            document.getElementById('bookmark-list').style.display = 'none';
+            document.getElementById('edit-bookmark').style.display = 'block';
+
+            document.getElementById('edit-url').value = bs[0][0]
+            document.getElementById('edit-title').value = bs[0][1]
+            document.getElementById('edit-tag').value = bs[0][2]
+            document.getElementById('edit-description').value = bs[0][3]
+        }
+
+        async function update_bookmark() {
+            await eel.update_bookmark(
+                document.getElementById('edit-url').value,
+                document.getElementById('edit-title').value,
+                document.getElementById('edit-tag').value,
+                document.getElementById('edit-description').value
+            )();
+
+            document.getElementById('edit-bookmark').style.display = 'none';
+
+            document.getElementById('create-bookmark').style.display = 'block';
+            document.getElementById('bookmark-list').style.display = 'block';
+
+            window.location.href = 'bookmarks.html';
+        }
+
+        async function delete_bookmark() {
+            let answer = confirm('削除しますが、よろしいですか?');
+
+            if (answer) {
+                await eel.delete_bookmark(document.getElementById('edit-url').value)();
+
+                window.location.href = 'bookmarks.html';
+            }
+        }
+    </script>
+{% endblock %}

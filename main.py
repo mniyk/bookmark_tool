@@ -1,81 +1,41 @@
-import datetime
 import eel
-from sqlite import Sqlite
+
+from bookmarks import bookmarks
+import sqlite
 
 
-db_path = 'db.sqlite'
-db = Sqlite(db_path)
+db = sqlite.Sqlite('db.sqlite')
 
-
-def create_table():
-    sql = '''
-        CREATE TABLE IF NOT EXISTS bookmark(
-            title TEXT, tag TEXT, url TEXT, description TEXT, 
-            created_at TEXT, updated_at TEXT
-        );
-    '''
-    db.curs.execute(sql)
+eel.init('web')
 
 
 @eel.expose
-def get_bookmark():
-    sql = 'SELECT title, tag, url FROM bookmark;'
-    db.curs.execute(sql)
-    bookmarks = db.curs.fetchall()
-
-    return bookmarks
+def insert_bookmark(url, title, tag, description):
+    result = bookmarks.insert_bookmark(db, url, title, tag, description)
+    return result
 
 
 @eel.expose
-def detail_bookmark(url):
-    sql = f"SELECT title, tag, url, description FROM bookmark WHERE url='{url}';"
-    db.curs.execute(sql)
-    bookmarks = db.curs.fetchone()
+def get_bookmarks(url):
+    if url == '':
+        bs = bookmarks.get_bookmarks(db)
+    else:
+        bs = bookmarks.get_bookmarks(db, url)
 
-    return bookmarks
+    bs = [b for b in bs]
+
+    return bs
+
+
+@eel.expose
+def update_bookmark(url, title, tag, description):
+    bookmarks.update_bookmark(db, url, title, tag, description)
 
 
 @eel.expose
 def delete_bookmark(url):
-    sql = f"DELETE FROM bookmark WHERE url='{url}';"
-    db.curs.execute(sql)
-    db.conn.commit()
+    bookmarks.delete_bookmark(db, url)
 
 
-@eel.expose
-def update_bookmark(title, tag, url, description):
-    sql = f"""
-        UPDATE bookmark 
-        SET title='{title}', tag='{tag}', url='{url}', description='{description}' 
-        WHERE url='{url}';
-    """
-    db.curs.execute(sql)
-    db.conn.commit()
-
-
-@eel.expose
-def add_bookmark(title, tag, url, description):
-    sql = f"SELECT 1 FROM bookmark WHERE url='{url}';"
-
-    db.curs.execute(sql)
-
-    if db.curs.fetchone():
-        return False
-    else:
-        sql = f"""
-            INSERT INTO bookmark
-            VALUES (
-                '{title}', '{tag}', '{url}', '{description}',
-                '{str(datetime.datetime.now())}', '{str(datetime.datetime.now())}'
-            );
-        """
-        db.curs.execute(sql)
-        db.conn.commit()
-
-        return True
-
-
-create_table()
-
-eel.init('web')
-eel.start('index.html', size=(600, 400))
+bookmarks.create_table(db)
+eel.start('templates/bookmarks.html', jinja_templates='templates')
